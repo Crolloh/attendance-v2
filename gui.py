@@ -124,6 +124,7 @@ class addStudent(QWidget):
         self.input.setPlaceholderText("Student ID")
         self.input.setAlignment(Qt.AlignCenter)
         self.input.setFont(QFont("Segoe UI", 12))
+        self.input.returnPressed.connect(self.addStudent)
 
         self.res.setAlignment(Qt.AlignCenter)
 

@@ -2,11 +2,12 @@ from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from attendance import record_attendance, add_student
+import re
 
 class ScanWindow(QWidget):
     def __init__(self, go_next):
         super().__init__()
-        self.title = QLabel("📋 Attendance System")
+        self.title = QLabel("📋 Yeah")
         self.subtitle = QLabel("Scan your barcode to time in")
         self.input = QLineEdit()
         self.result = QLabel("Waiting for scan...")
@@ -29,10 +30,6 @@ class ScanWindow(QWidget):
 
         self.result.setAlignment(Qt.AlignCenter)
 
-        self.addStudentsbtn.setStyleSheet('background-color: red;'
-                                          'color: white;'
-                                          'padding: 5px;'
-                                          'font-size: 15px')
         self.addStudentsbtn.clicked.connect(self.on_click_next)
 
         self.card.setStyleSheet("""
@@ -70,6 +67,12 @@ class ScanWindow(QWidget):
             QLineEdit:focus {
                 border: 1px solid #4a90e2;
             }
+            QPushButton {
+                background-color: red;
+                color: white;
+                padding: 5px;
+                font-size: 15px    
+            }
             QPushButton:hover {
                 background-color: #357ABD;
             }
@@ -96,7 +99,8 @@ class addStudent(QWidget):
         super().__init__()
         self.back = QPushButton('Go Back')
         self.title = QLabel('Add a Student')
-        self.input = QLineEdit()
+        self.input_name = QLineEdit()
+        self.input_ID = QLineEdit()
         self.res = QLabel('Waiting for scan...')
         self.card = QFrame()
         self.initUI_add()
@@ -121,10 +125,15 @@ class addStudent(QWidget):
         self.title.setAlignment(Qt.AlignCenter)
         self.title.setFont(QFont("Segoe UI", 16, QFont.Bold))
 
-        self.input.setPlaceholderText("Student ID")
-        self.input.setAlignment(Qt.AlignCenter)
-        self.input.setFont(QFont("Segoe UI", 12))
-        self.input.returnPressed.connect(self.addStudent)
+        self.input_name.setPlaceholderText('Student Name')
+        self.input_name.setAlignment(Qt.AlignCenter)
+        self.input_name.setFont(QFont("Segoe UI", 12))
+        self.input_name.returnPressed.connect(self.add_student_func)
+
+        self.input_ID.setPlaceholderText("Student ID")
+        self.input_ID.setAlignment(Qt.AlignCenter)
+        self.input_ID.setFont(QFont("Segoe UI", 12))
+        self.input_ID.returnPressed.connect(self.add_student_func)
 
         self.res.setAlignment(Qt.AlignCenter)
 
@@ -143,7 +152,9 @@ class addStudent(QWidget):
         card_layout.setSpacing(14)
         card_layout.addWidget(self.title)
         card_layout.setSpacing(10)
-        card_layout.addWidget(self.input)
+        card_layout.addWidget(self.input_name)
+        card_layout.setSpacing(6)
+        card_layout.addWidget(self.input_ID)
         card_layout.setSpacing(10)
         card_layout.addWidget(self.res)
 
@@ -157,20 +168,35 @@ class addStudent(QWidget):
 
     def on_click_back(self):
         self.go_back()
+    @staticmethod
+    def is_valid_name(name):
+        name = name.strip()
+        pattern = r"^[A-Za-z]+([ ,.'-][A-Za-z]+)*\.?$"
+        return bool(re.fullmatch(pattern, name))
+    #This was supposed to check for valid names but i guess anything can be a valid name lol
+    #I will just keep it in for the sake of... Well idk, it looks cool i guess
+    
+    def add_student_func(self):
+        student_id = self.input_ID.text().strip()
+        student_name = self.input_name.text().strip()
 
-    def addStudent(self):
-        student_id = self.input.text().strip()
-
-        if not student_id.isdigit():
+        if not student_id.isdigit() and not self.is_valid_name(student_name):
+            self.res.setText('❌ Invalid ID and Invalid Student Name')
+            self.res.setStyleSheet('color: red;')
+            self.input_ID.clear()  
+            self.input_name.clear()          
+            return
+        elif not student_id.isdigit():
             self.res.setText('❌ Invalid ID')
             self.res.setStyleSheet('color: red;')
-            self.input.clear()            
+            self.input_ID.clear()  
             return
-        
-        add_student(int(student_id))
-        self.res.setText('Added student successfully!')
-        self.res.setStyleSheet('color: green;')
-        self.input.clear()
+        else:
+            add_student(int(student_id), student_name)
+            self.res.setText('Added student successfully!')
+            self.res.setStyleSheet('color: green;')
+            self.input_ID.clear()
+            self.input_name.clear()
         
 
 

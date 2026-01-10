@@ -1,7 +1,7 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QFrame, QPushButton, QMainWindow, QStackedWidget
+from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QFrame, QPushButton, QMainWindow, QStackedWidget
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from attendance import record_attendance
+from attendance import record_attendance, add_student
 
 class ScanWindow(QWidget):
     def __init__(self, go_next):
@@ -33,7 +33,7 @@ class ScanWindow(QWidget):
                                           'color: white;'
                                           'padding: 5px;'
                                           'font-size: 15px')
-        self.addStudentsbtn.clicked.connect(self.on_click)
+        self.addStudentsbtn.clicked.connect(self.on_click_next)
 
         self.card.setStyleSheet("""
             QFrame {
@@ -70,8 +70,11 @@ class ScanWindow(QWidget):
             QLineEdit:focus {
                 border: 1px solid #4a90e2;
             }
+            QPushButton:hover {
+                background-color: #357ABD;
+            }
         """)
-    def on_click(self):
+    def on_click_next(self):
         self.go_next()
 
     def scan_id(self):
@@ -89,15 +92,32 @@ class ScanWindow(QWidget):
         self.input.clear()
 
 class addStudent(QWidget):
-    def __init__(self):
+    def __init__(self, go_back):
         super().__init__()
+        self.back = QPushButton('Go Back')
         self.title = QLabel('Add a Student')
         self.input = QLineEdit()
         self.res = QLabel('Waiting for scan...')
         self.card = QFrame()
         self.initUI_add()
+        self.go_back = go_back
 
     def initUI_add(self):
+
+        self.back.setStyleSheet("""
+            QPushButton {
+                background-color: red;
+                color: white;
+                padding: 6px 14px;
+                border-radius: 6px;
+                font-size: 13px;
+            }
+            QPushButton:hover {
+                background-color: #357ABD;     
+            }  
+        """)
+        self.back.clicked.connect(self.on_click_back)
+
         self.title.setAlignment(Qt.AlignCenter)
         self.title.setFont(QFont("Segoe UI", 16, QFont.Bold))
 
@@ -112,9 +132,12 @@ class addStudent(QWidget):
                 background: white;
                 border-radius: 12px;
                 padding: 20px;
-            }
+            }       
         """)
-        
+        top_layout = QHBoxLayout()
+        top_layout.addWidget(self.back)
+        top_layout.addStretch()
+
         card_layout = QVBoxLayout(self.card)
         card_layout.setSpacing(14)
         card_layout.addWidget(self.title)
@@ -124,11 +147,31 @@ class addStudent(QWidget):
         card_layout.addWidget(self.res)
 
         layout = QVBoxLayout()
+        layout.addLayout(top_layout)
         layout.addStretch()
         layout.addWidget(self.card)
         layout.addStretch()
 
         self.setLayout(layout)
+
+    def on_click_back(self):
+        self.go_back()
+
+    def addStudent(self):
+        student_id = self.input.text().strip()
+
+        if not student_id.isdigit():
+            self.res.setText('❌ Invalid ID')
+            self.res.setStyleSheet('color: red;')
+            self.input.clear()            
+            return
+        
+        add_student(int(student_id))
+        self.res.setText('Added student successfully!')
+        self.res.setStyleSheet('color: green;')
+        self.input.clear()
+        
+
 
 
 class mainWindow(QMainWindow):
@@ -140,13 +183,16 @@ class mainWindow(QMainWindow):
         self.setCentralWidget(self.stack)
 
         self.ScanWindow = ScanWindow(self.go_next)
-        self.addStudent = addStudent()
+        self.addStudent = addStudent(self.go_back)
 
         self.stack.addWidget(self.ScanWindow)
         self.stack.addWidget(self.addStudent)
 
     def go_next(self):
         self.stack.setCurrentIndex(1)
+
+    def go_back(self):
+        self.stack.setCurrentIndex(0)
 
 
 

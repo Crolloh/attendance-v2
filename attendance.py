@@ -83,3 +83,30 @@ def record_attendance(student_id):
     conn.close()
 
     return f"{student[0]} marked present"
+
+def remove_student(student_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    #DELETE FROM ATTENDANCE
+    cursor.execute("DELETE FROM attendance WHERE student_id = ?", 
+    (student_id,)
+    )
+    #DELETE FROM STUDENTS
+    cursor.execute("DELETE FROM students WHERE student_id = ?", 
+    (student_id,)
+    )
+
+    conn.commit()
+    conn.close()
+    
+def clear_attendance():
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        UPDATE attendance
+        SET time_in = NULL , status = NULL
+    """)
+
+    conn.commit()
+    conn.close()

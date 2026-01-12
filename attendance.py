@@ -1,10 +1,16 @@
 #This is to setup both the DBs of the attendance (add/remove of students from og DB)
 import sqlite3
 from datetime import datetime
+import os
+import sys
 
+def get_db_path():
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, "attendance.db")
+    return "attendance.db"
 
 def get_connection():
-    return sqlite3.connect('attendance.db')
+    return sqlite3.connect(get_db_path())
 
 def init_db():
     conn = get_connection()

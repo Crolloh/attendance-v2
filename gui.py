@@ -11,8 +11,6 @@ class ScanWindow(QWidget):
         self.subtitle = QLabel("Scan your barcode to time in")
         self.input = QLineEdit()
         self.result = QLabel("Waiting for scan...")
-        self.addStudentsbtn = QPushButton('Add a student')
-        self.removeStudentbtn = QPushButton('Remove a student')
         self.clearAttendance = QPushButton('Clear Attendance')
         self.otherOptions = QPushButton('Other Options')
         self.card = QFrame()
@@ -35,9 +33,8 @@ class ScanWindow(QWidget):
 
         self.result.setAlignment(Qt.AlignCenter)
 
-        self.addStudentsbtn.clicked.connect(self.on_click_add)
-        self.removeStudentbtn.clicked.connect(self.on_click_remove)
         self.clearAttendance.clicked.connect(self.on_click_clear)
+        self.otherOptions.clicked.connect(self.on_click_other)
 
         self.card.setStyleSheet("""
             QFrame {
@@ -54,9 +51,6 @@ class ScanWindow(QWidget):
         card_layout.addSpacing(10)
         card_layout.addWidget(self.input)
         card_layout.addWidget(self.result)
-        card_layout.addWidget(self.addStudentsbtn)
-        card_layout.addSpacing(5)
-        card_layout.addWidget(self.removeStudentbtn)
         card_layout.addSpacing(5)
         card_layout.addWidget(self.clearAttendance)
         card_layout.addWidget(self.otherOptions)
@@ -89,11 +83,9 @@ class ScanWindow(QWidget):
                 background-color: #357ABD;
             }
         """)
-    def on_click_add(self):
-        self.go_next()
 
-    def on_click_remove(self):
-        self.go_next2()
+    def on_click_other(self):
+        self.go_other()
     
     def on_click_clear(self):
         clear_attendance()
@@ -303,16 +295,23 @@ class removeWindow(QWidget):
             self.input.clear()
 
 class otherOptions(QWidget):
-    def __init__(self, go_back):
+    def __init__(self, go_back, go_next, go_next2):
         super().__init__()
         self.back = QPushButton('Go back')
         self.title = QLabel('Other Options')
+        self.addStudentsbtn = QPushButton('Add a student')
+        self.removeStudentbtn = QPushButton('Remove a student')
         self.card = QFrame()
         self.go_back = go_back
+        self.go_next = go_next
+        self.go_next2 = go_next2
         self.initUI_other()
 
     def initUI_other(self):
-        self.back.setStyleSheet("""
+        self.addStudentsbtn.clicked.connect(self.on_click_add)
+        self.removeStudentbtn.clicked.connect(self.on_click_remove)
+
+        self.setStyleSheet("""
              QPushButton {
                 background-color: red;
                 color: white;
@@ -343,6 +342,8 @@ class otherOptions(QWidget):
         card_layout = QVBoxLayout(self.card)
         card_layout.setSpacing(14)
         card_layout.addWidget(self.title)
+        card_layout.addWidget(self.addStudentsbtn)
+        card_layout.addWidget(self.removeStudentbtn)
 
         layout = QVBoxLayout()
         layout.addLayout(top_layout)
@@ -355,6 +356,12 @@ class otherOptions(QWidget):
     def on_click_back(self):
         self.go_back()
 
+    def on_click_add(self):
+        self.go_next()
+
+    def on_click_remove(self):
+        self.go_next2()
+
 class mainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -366,24 +373,24 @@ class mainWindow(QMainWindow):
         self.ScanWindow = ScanWindow(self.go_next, self.go_next2, self.go_to_other)
         self.addStudent = addStudent(self.go_back)
         self.removeStudent = removeWindow(self.go_back)
-        self.goOther = otherOptions(self.go_back)
+        self.goOther = otherOptions(self.go_back, self.go_next, self.go_next2)
 
         self.stack.addWidget(self.ScanWindow)
         self.stack.addWidget(self.addStudent)
         self.stack.addWidget(self.removeStudent)
         self.stack.addWidget(self.goOther)
 
+    def go_back(self):
+        self.stack.setCurrentIndex(0)
+
     def go_next(self):
         self.stack.setCurrentIndex(1)
 
-    def go_to_other(self):
-        self.stack.setCurrentIndex(3)
-
     def go_next2(self):
         self.stack.setCurrentIndex(2)
-
-    def go_back(self):
-        self.stack.setCurrentIndex(0)
+    
+    def go_to_other(self):
+        self.stack.setCurrentIndex(3)
 
 
 

@@ -28,6 +28,7 @@ def init_db():
             student_id INTEGER PRIMARY KEY,
             student_names TEXT,
             time_in TEXT DEFAULT NULL,
+            time_out TEXT DEFAULT NULL,
             status TEXT DEFAULT 'N/A',
             FOREIGN KEY (student_id) REFERENCES students(student_id)
         )
@@ -38,6 +39,7 @@ def init_db():
             student_id INTEGER PRIMARY KEY,
             student_names TEXT,
             time_in TEXT DEFAULT NULL,
+            time_out TEXT DEFAULT NULL,
             status TEXT DEFAULT 'N/A',
             FOREIGN KEY (student_id) REFERENCES students(student_id)
         )
@@ -72,6 +74,59 @@ def add_student(student_id, student_name, grade_level):
 
     conn.commit()
     conn.close()
+
+def time_in_or_out(student_id, grade_level, status):
+    if status == "TIME IN":
+        time_out(student_id, grade_level)
+    elif status == "TIME OUT":
+        record_attendance(student_id, grade_level)
+
+def time_out(student_id, grade_level):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT student_names, grade_level FROM students WHERE student_id = ?",
+        (student_id,)
+    )
+    student = cursor.fetchone()
+
+    if not student:
+        conn.close()
+        return "Unregistered ID"
+    
+    name = student[0]
+    gradeLevel = student[1]
+
+    if gradeLevel != grade_level:
+        conn.close()
+        return f"{name} is not in {gradeLevel}"
+    
+    table = get_gradelevel(grade_level)
+
+    cursor.execute(
+        f"SELECT time_out FROM {table} WHERE student_id = ?",
+        (student_id,)
+    )
+    already_present = cursor.fetchone()
+
+    if already_present and already_present[0]:
+        conn.close()
+        return f"{student[0]} already timed out"
+
+    time_in = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    cursor.execute(f"""
+        UPDATE {table}
+        SET time_out = ?
+        WHERE student_id = ?
+    """, (time_in, student_id))
+
+    conn.commit()
+    conn.close()
+
+    return f"{student[0]} marked present"
+
 
 def record_attendance(student_id, grade_level):
     conn = get_connection()

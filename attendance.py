@@ -104,6 +104,7 @@ def time_in_or_out(student_id, grade_level):
     recorded = cursor.fetchone()
 
     if not recorded:
+        conn.close()
         return "Student not found in database"
     
     time_in1, time_out1 = recorded
@@ -118,14 +119,19 @@ def time_in_or_out(student_id, grade_level):
         conn.close()
         return "Student already timed in and out"
 
+    conn.commit()
+    conn.close()
+
 def time_out(student_id, grade_level):
     conn = get_connection()
     cursor = conn.cursor()
 
+    table = get_gradelevel(grade_level)
+
     cursor.execute(
     f"SELECT time_out FROM {table} WHERE student_id = ?",
     (student_id,)
-)
+    )
     if cursor.fetchone()[0]:
         conn.close()
         return "Already timed out"
@@ -137,7 +143,6 @@ def time_out(student_id, grade_level):
     student = cursor.fetchone()
 
     time_out = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    table = get_gradelevel(grade_level)
 
     cursor.execute(f"""
         UPDATE {table}

@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from attendance import add_student, remove_student, clear_attendance, time_in_or_out
+from export import export_excel
 import re
 
 class ScanWindow(QWidget):
@@ -350,6 +351,7 @@ class otherOptions(QWidget):
         self.title = QLabel('Other Options')
         self.addStudentsbtn = QPushButton('Add a student')
         self.removeStudentbtn = QPushButton('Remove a student')
+        self.exportExcel = QPushButton('Export to Excel')
         self.card = QFrame()
         self.go_back = go_back
         self.go_next = go_next
@@ -359,6 +361,7 @@ class otherOptions(QWidget):
     def initUI_other(self):
         self.addStudentsbtn.clicked.connect(self.on_click_add)
         self.removeStudentbtn.clicked.connect(self.on_click_remove)
+        self.exportExcel.clicked.connect(self.on_click_export)  
 
         self.setStyleSheet("""
              QPushButton {
@@ -393,6 +396,7 @@ class otherOptions(QWidget):
         card_layout.addWidget(self.title)
         card_layout.addWidget(self.addStudentsbtn)
         card_layout.addWidget(self.removeStudentbtn)
+        card_layout.addWidget(self.exportExcel)
 
         layout = QVBoxLayout()
         layout.addLayout(top_layout)
@@ -411,6 +415,10 @@ class otherOptions(QWidget):
     def on_click_remove(self):
         self.go_next2()
 
+    def on_click_export(self):
+        filename = export_excel()
+        self.exportExcel.setText(f'Exported to {filename}')
+        
 class mainWindow(QMainWindow):
     def __init__(self):
         super().__init__()

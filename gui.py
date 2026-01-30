@@ -19,6 +19,7 @@ class ScanWindow(QWidget):
         self.grade12_btn = QPushButton('Grade 12')
         self.grade_group = QButtonGroup(self)
         self.grade_group.setExclusive(True)
+        self.exportExcel = QPushButton('Export to Excel')
         self.card = QFrame()
         self.initUI_scan()
         self.go_next = go_next
@@ -47,6 +48,7 @@ class ScanWindow(QWidget):
         self.grade_group.buttonClicked[int].connect(self.setGrade)
         self.clearAttendance.clicked.connect(self.on_click_clear)
         self.otherOptions.clicked.connect(self.on_click_other)
+        self.exportExcel.clicked.connect(self.on_click_export) 
 
         self.card.setStyleSheet("""
             QFrame {
@@ -69,6 +71,7 @@ class ScanWindow(QWidget):
         card_layout.addWidget(self.result)
         card_layout.addSpacing(5)
         card_layout.addWidget(self.clearAttendance)
+        card_layout.addWidget(self.exportExcel)
         card_layout.addWidget(self.otherOptions)
         
         layout = QVBoxLayout()
@@ -108,9 +111,13 @@ class ScanWindow(QWidget):
         self.go_other()
     
     def on_click_clear(self, grade):
-        self.current_gradelevel = grade
-        clear_attendance(int(grade))
+        clear_attendance(self.current_gradelevel)
         self.result.setText('Attendance cleared!')
+        self.result.setStyleSheet('color: green;')
+
+    def on_click_export(self, grade):
+        filename = export_excel(self.current_gradelevel)
+        self.result.setText(f'Exported to {filename}')
         self.result.setStyleSheet('color: green;')
 
     def scan_id(self):
@@ -124,9 +131,14 @@ class ScanWindow(QWidget):
             return
 
         message = time_in_or_out(int(student_id), int(grade))
-        self.result.setText("✅ " + message)
-        self.result.setStyleSheet("color: green;")
-        self.input.clear()
+        if not message == "Unregistered ID":
+            self.result.setText("✅ " + message)
+            self.result.setStyleSheet("color: green;")
+            self.input.clear()
+        else:
+            self.result.setText("❌ " + message)
+            self.result.setStyleSheet("color: red;")
+            self.input.clear()
 
 class addStudent(QWidget):
     def __init__(self, go_back):
@@ -351,7 +363,6 @@ class otherOptions(QWidget):
         self.title = QLabel('Other Options')
         self.addStudentsbtn = QPushButton('Add a student')
         self.removeStudentbtn = QPushButton('Remove a student')
-        self.exportExcel = QPushButton('Export to Excel')
         self.card = QFrame()
         self.go_back = go_back
         self.go_next = go_next
@@ -360,8 +371,7 @@ class otherOptions(QWidget):
 
     def initUI_other(self):
         self.addStudentsbtn.clicked.connect(self.on_click_add)
-        self.removeStudentbtn.clicked.connect(self.on_click_remove)
-        self.exportExcel.clicked.connect(self.on_click_export)  
+        self.removeStudentbtn.clicked.connect(self.on_click_remove) 
 
         self.setStyleSheet("""
              QPushButton {
@@ -396,8 +406,6 @@ class otherOptions(QWidget):
         card_layout.addWidget(self.title)
         card_layout.addWidget(self.addStudentsbtn)
         card_layout.addWidget(self.removeStudentbtn)
-        card_layout.addWidget(self.exportExcel)
-
         layout = QVBoxLayout()
         layout.addLayout(top_layout)
         layout.addStretch()
@@ -414,10 +422,6 @@ class otherOptions(QWidget):
 
     def on_click_remove(self):
         self.go_next2()
-
-    def on_click_export(self):
-        filename = export_excel()
-        self.exportExcel.setText(f'Exported to {filename}')
         
 class mainWindow(QMainWindow):
     def __init__(self):

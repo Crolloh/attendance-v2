@@ -153,7 +153,7 @@ def time_out(student_id, grade_level):
     conn.commit()
     conn.close()
 
-    return f"{student[0]} marked present"
+    return f"{student[0]} timed out"
 
 
 def record_attendance(student_id, grade_level):

@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QFrame, QPushButton, QMainWindow, QStackedWidget, QButtonGroup
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
-from attendance import record_attendance, add_student, remove_student, clear_attendance
+from attendance import add_student, remove_student, clear_attendance, time_in_or_out
+from export import export_excel
 import re
 
 class ScanWindow(QWidget):
@@ -103,12 +104,12 @@ class ScanWindow(QWidget):
     def setGrade(self, grade):
         self.current_gradelevel = grade
 
-
     def on_click_other(self):
         self.go_other()
     
-    def on_click_clear(self):
-        clear_attendance()
+    def on_click_clear(self, grade):
+        self.current_gradelevel = grade
+        clear_attendance(int(grade))
         self.result.setText('Attendance cleared!')
         self.result.setStyleSheet('color: green;')
 
@@ -122,7 +123,7 @@ class ScanWindow(QWidget):
             self.input.clear()
             return
 
-        message = record_attendance(int(student_id), int(grade))
+        message = time_in_or_out(int(student_id), int(grade))
         self.result.setText("✅ " + message)
         self.result.setStyleSheet("color: green;")
         self.input.clear()
@@ -226,16 +227,19 @@ class addStudent(QWidget):
             self.res.setText('❌ Invalid ID and Invalid Student Name')
             self.res.setStyleSheet('color: red;')
             self.input_ID.clear()  
-            self.input_name.clear()          
+            self.input_name.clear()    
+            self.input_gradelevel.clear()      
             return
-        elif student_name == '':
+        elif student_name == '' or student_gradelevel == '' or student_id == '':
             self.res.setText('❌ Invalid Student Name')
             self.res.setStyleSheet('color: red;')
             self.input_name.clear()
-        elif not student_id.isdigit():
-            self.res.setText('❌ Invalid ID')
+            self.input_gradelevel.clear()
+        elif not student_id.isdigit() or not student_gradelevel.isdigit():
+            self.res.setText('❌ Invalid ID or Grade Level')
             self.res.setStyleSheet('color: red;')
             self.input_ID.clear()  
+            self.input_gradelevel.clear()
             return
         else:
             add_student(int(student_id), student_name, int(student_gradelevel))
@@ -250,7 +254,8 @@ class removeWindow(QWidget):
         super().__init__()
         self.back = QPushButton('Go back')
         self.title = QLabel('Remove Student')
-        self.input = QLineEdit()
+        self.input_ID = QLineEdit()
+        self.input_Grade = QLineEdit()
         self.res = QLabel('Waiting...')
         self.card = QFrame()
         self.go_back = go_back
@@ -274,10 +279,15 @@ class removeWindow(QWidget):
         self.title.setAlignment(Qt.AlignCenter)
         self.title.setFont(QFont("Segoe UI", 16, QFont.Bold))
 
-        self.input.setPlaceholderText('Student ID')
-        self.input.setAlignment(Qt.AlignCenter)
-        self.input.setFont(QFont("Segoe UI", 12))
-        self.input.returnPressed.connect(self.remove_student_func)
+        self.input_ID.setPlaceholderText('Student ID')
+        self.input_ID.setAlignment(Qt.AlignCenter)
+        self.input_ID.setFont(QFont("Segoe UI", 12))
+        self.input_ID.returnPressed.connect(self.remove_student_func)
+
+        self.input_Grade.setPlaceholderText('Student Grade Level')
+        self.input_Grade.setAlignment(Qt.AlignCenter)
+        self.input_Grade.setFont(QFont("Segoe UI", 12))
+        self.input_Grade.returnPressed.connect(self.remove_student_func)
 
         self.res.setAlignment(Qt.AlignCenter)
 
@@ -296,8 +306,9 @@ class removeWindow(QWidget):
         card_layout.setSpacing(14)
         card_layout.addWidget(self.title)
         card_layout.setSpacing(10)
-        card_layout.addWidget(self.input)
+        card_layout.addWidget(self.input_ID)
         card_layout.setSpacing(10)
+        card_layout.addWidget(self.input_Grade)
         card_layout.addWidget(self.res)
 
         layout = QVBoxLayout()
@@ -312,18 +323,26 @@ class removeWindow(QWidget):
         self.go_back()
 
     def remove_student_func(self):
-        student_id = self.input.text().strip()
-
-        if not student_id.isdigit():
-            self.res.setText('❌ Invalid ID')
+        student_id = self.input_ID.text().strip()
+        student_gradelevel = self.input_Grade.text().strip()
+        if student_id == '' or student_gradelevel == '':
+            self.res.setText('❌ Invalid ID or Grade Level')
             self.res.setStyleSheet('color: red;')
-            self.input.clear()
+            self.input_ID.clear()
+            self.input_Grade.clear()
+            return
+        elif not student_id.isdigit() or not student_gradelevel.isdigit():
+            self.res.setText('❌ Invalid ID or Grade Level')
+            self.res.setStyleSheet('color: red;')
+            self.input_ID.clear()
+            self.input_Grade.clear()
             return
         else:
-            remove_student(int(student_id))
+            remove_student(int(student_id), int(student_gradelevel))
             self.res.setText('Succesfully removed student! ')
             self.res.setStyleSheet('color: green;')
-            self.input.clear()
+            self.input_ID.clear()
+            self.input_Grade.clear()
 
 class otherOptions(QWidget):
     def __init__(self, go_back, go_next, go_next2):
@@ -332,6 +351,7 @@ class otherOptions(QWidget):
         self.title = QLabel('Other Options')
         self.addStudentsbtn = QPushButton('Add a student')
         self.removeStudentbtn = QPushButton('Remove a student')
+        self.exportExcel = QPushButton('Export to Excel')
         self.card = QFrame()
         self.go_back = go_back
         self.go_next = go_next
@@ -341,6 +361,7 @@ class otherOptions(QWidget):
     def initUI_other(self):
         self.addStudentsbtn.clicked.connect(self.on_click_add)
         self.removeStudentbtn.clicked.connect(self.on_click_remove)
+        self.exportExcel.clicked.connect(self.on_click_export)  
 
         self.setStyleSheet("""
              QPushButton {
@@ -375,6 +396,7 @@ class otherOptions(QWidget):
         card_layout.addWidget(self.title)
         card_layout.addWidget(self.addStudentsbtn)
         card_layout.addWidget(self.removeStudentbtn)
+        card_layout.addWidget(self.exportExcel)
 
         layout = QVBoxLayout()
         layout.addLayout(top_layout)
@@ -393,6 +415,10 @@ class otherOptions(QWidget):
     def on_click_remove(self):
         self.go_next2()
 
+    def on_click_export(self):
+        filename = export_excel()
+        self.exportExcel.setText(f'Exported to {filename}')
+        
 class mainWindow(QMainWindow):
     def __init__(self):
         super().__init__()

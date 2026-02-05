@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QFrame, QPushButton, QMainWindow, QStackedWidget, QButtonGroup
+from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QFrame, QPushButton, QMainWindow, QStackedWidget, QButtonGroup, QDialog
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from attendance import add_student, remove_student, clear_attendance, time_in_or_out
@@ -108,14 +108,18 @@ class ScanWindow(QWidget):
         self.current_gradelevel = grade
 
     def on_click_other(self):
-        self.go_other()
+        dialog = AdminLogin()
+
+        result = dialog.exec_()
+        if result == QDialog.Accepted:
+            self.go_other()
     
-    def on_click_clear(self, grade):
+    def on_click_clear(self):
         clear_attendance(self.current_gradelevel)
         self.result.setText('Attendance cleared!')
         self.result.setStyleSheet('color: green;')
 
-    def on_click_export(self, grade):
+    def on_click_export(self):
         filename = export_excel(self.current_gradelevel)
         self.result.setText(f'Exported to {filename}')
         self.result.setStyleSheet('color: green;')
@@ -139,6 +143,35 @@ class ScanWindow(QWidget):
             self.result.setText("❌ " + message)
             self.result.setStyleSheet("color: red;")
             self.input.clear()
+
+class AdminLogin(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('Admin Login')
+        self.setFixedSize(250, 150)
+        self.admin_password = QLineEdit()
+        self.admin_confirmpass = QLineEdit()
+        self.UI()
+
+    def UI(self):
+        layout = QVBoxLayout()
+        layout.addWidget(self.admin_password)
+        layout.addWidget(self.admin_confirmpass)
+        self.admin_password.setPlaceholderText('Enter Admin Password')
+        self.admin_confirmpass.setPlaceholderText('Confirm Admin Password')
+        self.admin_password.returnPressed.connect(self.check_password)
+        self.admin_confirmpass.returnPressed.connect(self.check_password)
+        self.setLayout(layout)
+
+    def check_password(self):
+        password = self.admin_password.text().strip()
+        password_confirm = self.admin_confirmpass.text().strip()
+
+        if password == "admin123CEFERINO" and password_confirm == "admin123CEFERINO":
+            self.accept()
+        else: 
+            self.admin_password.clear()
+            self.admin_confirmpass.clear()
 
 class addStudent(QWidget):
     def __init__(self, go_back):
@@ -422,7 +455,7 @@ class otherOptions(QWidget):
 
     def on_click_remove(self):
         self.go_next2()
-        
+
 class mainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -432,8 +465,8 @@ class mainWindow(QMainWindow):
         self.setCentralWidget(self.stack)
 
         self.ScanWindow = ScanWindow(self.go_next, self.go_next2, self.go_to_other)
-        self.addStudent = addStudent(self.go_back)
-        self.removeStudent = removeWindow(self.go_back)
+        self.addStudent = addStudent(self.go_back_other)
+        self.removeStudent = removeWindow(self.go_back_other)
         self.goOther = otherOptions(self.go_back, self.go_next, self.go_next2)
 
         self.stack.addWidget(self.ScanWindow)
@@ -451,6 +484,9 @@ class mainWindow(QMainWindow):
         self.stack.setCurrentIndex(2)
     
     def go_to_other(self):
+        self.stack.setCurrentIndex(3)
+    
+    def go_back_other(self):
         self.stack.setCurrentIndex(3)
 
 

@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QFrame, QPushButton, QMainWindow, QStackedWidget, QButtonGroup, QDialog
+from PyQt5.QtWidgets import QWidget, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QFrame, QPushButton, QMainWindow, QStackedWidget, QButtonGroup, QDialog, QMessageBox, QCheckBox
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from attendance import add_student, remove_student, clear_attendance, time_in_or_out
@@ -135,17 +135,48 @@ class AdminLogin(QDialog):
         self.setFixedSize(250, 150)
         self.admin_password = QLineEdit()
         self.admin_confirmpass = QLineEdit()
+        self.showpass = QCheckBox("—")
+        self.showpass_confirm = QCheckBox('—')
         self.UI()
-
+    #➖👁
     def UI(self):
+        pass_layout = QHBoxLayout()
+        pass_layout.addWidget(self.admin_password)
+        pass_layout.addWidget(self.showpass)
+
+        confirm_layout = QHBoxLayout()
+        confirm_layout.addWidget(self.admin_confirmpass)
+        confirm_layout.addWidget(self.showpass_confirm)
+
         layout = QVBoxLayout()
-        layout.addWidget(self.admin_password)
-        layout.addWidget(self.admin_confirmpass)
+        layout.addLayout(pass_layout)
+        layout.addLayout(confirm_layout)
         self.admin_password.setPlaceholderText('Enter Admin Password')
+        self.admin_password.setEchoMode(QLineEdit.Password)
         self.admin_confirmpass.setPlaceholderText('Confirm Admin Password')
+        self.admin_confirmpass.setEchoMode(QLineEdit.Password)
         self.admin_password.returnPressed.connect(self.check_password)
         self.admin_confirmpass.returnPressed.connect(self.check_password)
+        self.showpass.stateChanged.connect(self.toggle_pass)
+        self.showpass_confirm.stateChanged.connect(self.toggle_confpass)
         self.setLayout(layout)
+
+    
+    def toggle_pass(self, state):
+        if state: 
+            self.showpass.setText('👁')
+            self.admin_password.setEchoMode(QLineEdit.Normal)
+        else:
+            self.showpass.setText('—')
+            self.admin_password.setEchoMode(QLineEdit.Password)
+
+    def toggle_confpass(self, state):
+        if state:
+            self.showpass_confirm.setText('👁')
+            self.admin_confirmpass.setEchoMode(QLineEdit.Normal)
+        else:
+            self.showpass_confirm.setText('—')
+            self.admin_confirmpass.setEchoMode(QLineEdit.Password)
 
     def check_password(self):
         password = self.admin_password.text().strip()
@@ -154,6 +185,7 @@ class AdminLogin(QDialog):
         if password == "admin123CEFERINO" and password_confirm == "admin123CEFERINO":
             self.accept()
         else: 
+            QMessageBox.warning(self, "Error", "Wrong Password, try again!")
             self.admin_password.clear()
             self.admin_confirmpass.clear()
 
@@ -482,7 +514,7 @@ class mainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Attendance Scanner")
-        self.setGeometry(0, 0, 500, 500)
+        self.setGeometry(150, 100, 500, 500)
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
 

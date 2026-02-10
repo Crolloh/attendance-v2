@@ -4,6 +4,7 @@ import os
 import sys
 import datetime
 from attendance import get_gradelevel
+from openpyxl.utils import get_column_letter
 
 def get_db_path():
     if hasattr(sys, "_MEIPASS"):
@@ -25,8 +26,23 @@ def export_excel(grade_level):
 
     df = pd.read_sql_query(query, conn)
     conn.close()
+    home = os.path.expanduser("~")
+    where_doc = os.path.join(home, "Documents")
+    app_folder = os.path.join(where_doc, "Attendance Exports")
+    os.makedirs(app_folder, exist_ok=True)
+    subfolders_bydate = os.path.join(app_folder, f"{datetime.date.today()}")
+    os.makedirs(subfolders_bydate, exist_ok=True)
+    filename = f"Attendance_{datetime.date.today()} grade{grade_level}.xlsx"
+    full_path = os.path.join(subfolders_bydate, filename)
 
-    filename = f"Attendance_{datetime.date.today()}.xlsx"
-    df.to_excel(filename, index=False)
+    with pd.ExcelWriter(full_path, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Sheet1')
+        worksheet = writer.sheets['Sheet1']
 
-    return filename
+        for i, col in enumerate(df.columns, 1):
+            max_length = max(df[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.column_dimensions[get_column_letter(i)].width = max_length
+
+    os.startfile(subfolders_bydate)
+
+    return full_path

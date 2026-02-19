@@ -304,7 +304,7 @@ class addStudent(QWidget):
             return
         else:
             add_student(int(student_id), student_name, int(student_gradelevel))
-            self.res.setText('Added student successfully!')
+            self.res.setText(f'Added {student_name} successfully!')
             self.res.setStyleSheet('color: green;')
             self.input_ID.clear()
             self.input_name.clear()

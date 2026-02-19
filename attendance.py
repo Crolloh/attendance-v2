@@ -3,11 +3,27 @@ import sqlite3
 from datetime import datetime
 import os
 import sys
+import shutil
 
 def get_db_path():
-    if hasattr(sys, "_MEIPASS"):
-        return os.path.join(sys._MEIPASS, "attendance.db")
-    return "attendance.db"
+    appdata = os.getenv("APPDATA")
+    app_folder = os.path.join(appdata, "AttendanceApp")
+    
+    if not os.path.exists(app_folder):
+        os.makedirs(app_folder)
+    
+    db_path = os.path.join(app_folder, "attendance.db")
+
+    if not os.path.exists(db_path):
+        if hasattr(sys, "_MEIPASS"):
+           shutil.copy(
+               os.path.join(sys._MEIPASS, "attendance.db"),
+            db_path
+           )
+        else:
+            shutil.copy("attendance.db", db_path)
+
+    return db_path
 
 def get_connection():
     return sqlite3.connect(get_db_path())

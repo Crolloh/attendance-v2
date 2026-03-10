@@ -3,13 +3,8 @@ import pandas as pd
 import os
 import sys
 import datetime
-from attendance import get_gradelevel
+from attendance import get_gradelevel, get_db_path
 from openpyxl.utils import get_column_letter
-
-def get_db_path():
-    if hasattr(sys, "_MEIPASS"):
-        return os.path.join(sys._MEIPASS, "attendance.db")
-    return "attendance.db"
 
 def export_excel(grade_level):
     conn = sqlite3.connect(get_db_path())

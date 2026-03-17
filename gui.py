@@ -132,7 +132,7 @@ class AdminLogin(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Admin Login')
-        self.setFixedSize(250, 150)
+        self.setFixedSize(250, 100)
         self.admin_password = QLineEdit()
         self.admin_confirmpass = QLineEdit()
         self.showpass = QCheckBox("—")
@@ -405,6 +405,29 @@ class removeWindow(QWidget):
             self.input_ID.clear()
             self.input_Grade.clear()
 
+class subjectName(QDialog): #3/17 PLS MAKE IT CHECK FOR DUPES NEXT TIME THX
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('Subject Name')
+        self.setFixedSize(250, 50)
+        self.subject = QLineEdit()
+        self.subject_text = ""
+        self.subjectUI()
+    
+    def subjectUI(self):
+        self.subject.setPlaceholderText('Enter Your Subject')
+        self.subject.returnPressed.connect(self.onEnter)
+        layout = QVBoxLayout()
+        layout.addWidget(self.subject)
+        self.setLayout(layout)
+
+    def onEnter(self):
+        self.subject_text = self.subject.text()  
+        self.accept()  
+
+    def get_subject(self):
+        return self.subject_text
+    
 class otherOptions(QWidget):
     def __init__(self, go_back, go_next, go_next2):
         super().__init__()
@@ -425,7 +448,7 @@ class otherOptions(QWidget):
         self.go_next = go_next
         self.go_next2 = go_next2
         self.initUI_other()
-
+    
     def initUI_other(self):
         self.grade_group.addButton(self.grade11_btn, 11)
         self.grade_group.addButton(self.grade12_btn, 12)
@@ -505,10 +528,24 @@ class otherOptions(QWidget):
         self.res.setText('Attendance cleared!')
         self.res.setStyleSheet('color: green;')
 
+    @staticmethod
+    def clean_filename(text):
+        text = re.sub(r'[\\/*?:"<>|]', "", text)
+        text = text.strip().replace(' ', '_')
+        text = re.sub(r'_+', '_', text)
+        return text
+    
     def on_click_export(self):
-        filename = export_excel(self.current_gradelevel)
-        self.res.setText(f'Exported to {filename}')
-        self.res.setStyleSheet('color: green;')
+        dialog = subjectName()
+
+        if dialog.exec_():
+            subject = dialog.get_subject()
+        
+            if subject.strip():
+                clean_subject = self.clean_filename(subject)
+                filename = export_excel(int(self.current_gradelevel), clean_subject)
+                self.res.setText(f'Exported to {filename}')
+                self.res.setStyleSheet('color: green;')
 
 class mainWindow(QMainWindow):
     def __init__(self):

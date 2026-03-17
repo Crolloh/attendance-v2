@@ -6,7 +6,7 @@ import datetime
 from attendance import get_gradelevel, get_db_path
 from openpyxl.utils import get_column_letter
 
-def export_excel(grade_level):
+def export_excel(grade_level, subject):
     conn = sqlite3.connect(get_db_path())
     table = get_gradelevel(int(grade_level))
     query = f"""
@@ -27,7 +27,7 @@ def export_excel(grade_level):
     os.makedirs(app_folder, exist_ok=True)
     subfolders_bydate = os.path.join(app_folder, f"{datetime.date.today()}")
     os.makedirs(subfolders_bydate, exist_ok=True)
-    filename = f"Attendance_{datetime.date.today()} grade{grade_level}.xlsx"
+    filename = f"Attendance_{datetime.date.today()} {subject} grade{grade_level}.xlsx"
     full_path = os.path.join(subfolders_bydate, filename)
 
     with pd.ExcelWriter(full_path, engine='openpyxl') as writer:
